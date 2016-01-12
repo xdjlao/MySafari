@@ -8,7 +8,7 @@
 
 #import "RootViewController.h"
 
-@interface RootViewController () <UIWebViewDelegate, UITextFieldDelegate>
+@interface RootViewController () <UIWebViewDelegate, UITextFieldDelegate, UIScrollViewDelegate>
 @property (weak, nonatomic) IBOutlet UIWebView *webView;
 @property (weak, nonatomic) IBOutlet UITextField *urlTextField;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicator;
@@ -22,9 +22,9 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view.
     self.pageCount = 0;
     self.backCount = 0;
+    self.webView.scrollView.delegate = self;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -48,6 +48,8 @@
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     if([textField.text rangeOfString:@"http://"].location == NSNotFound) {
+        self.urlFix = [@"http://" stringByAppendingString:textField.text];
+    } else if ([textField.text rangeOfString:@"https://"].location == NSNotFound) {
         self.urlFix = [@"http://" stringByAppendingString:textField.text];
     } else {
         self.urlFix = textField.text;
@@ -81,6 +83,27 @@
 - (IBAction)onReloadButtonPressed:(UIButton *)sender {
     [self.webView reload];
 }
+
+- (IBAction)onTeaserPressed:(UIButton *)sender {
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Coming soon!" message:nil preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction *confirm = [UIAlertAction actionWithTitle:@"Got it" style:UIAlertActionStyleDefault handler:nil];
+    
+    [alertController addAction:confirm];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+
+
+
+
+-(void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    NSLog(@"%f", scrollView.contentOffset.y);
+    
+}
+
+
 
 /*
 #pragma mark - Navigation
