@@ -1,5 +1,5 @@
 //
-//  ViewController.h
+//  RootViewController.h
 //  MySafari
 //
 //  Created by Jerry on 1/12/16.
@@ -8,8 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ViewController : UIViewController
-
+@interface RootViewController : UIViewController
 
 @end
-
