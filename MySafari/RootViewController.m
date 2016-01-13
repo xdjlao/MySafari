@@ -15,6 +15,7 @@
 @property int pageCount;
 @property int backCount;
 @property NSString *urlFix;
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *topConstraint;
 
 @end
 
@@ -26,6 +27,14 @@
     self.backCount = 0;
     self.webView.scrollView.delegate = self;
 }
+
+/*[self.view addConstraints:[NSLayoutConstraint
+ constraintsWithVisualFormat:@"V:|-[myView(>=748)]-|"
+ options:NSLayoutFormatDirectionLeadingToTrailing
+ metrics:nil
+ views:NSDictionaryOfVariableBindings(myView)]];
+ */
+
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -100,7 +109,27 @@
 
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView {
     NSLog(@"%f", scrollView.contentOffset.y);
+    CGRect rect = [self.view viewWithTag:10].frame;
+    [self.view viewWithTag:10].frame = CGRectMake(0, scrollView.contentOffset.y * -1, rect.size.width, rect.size.height);
+    [UIView beginAnimations:nil context:NULL];
+    [UIView setAnimationDuration:0.5f];
     
+    [self.view viewWithTag:10].alpha = (68.0 - scrollView.contentOffset.y)/68.0;
+    
+    [UIView commitAnimations];
+    
+
+    
+    /*if (scrollView.contentOffset.y < -68) {
+        self.topConstraint.constant = 68.0 - scrollView.contentOffset.y;
+
+    }*/
+    NSString *constraint = [NSString stringWithFormat:@"V:|-spacing[self.webView(==%f)]|", 68.0 - scrollView.contentOffset.y];
+    [self.view addConstraints:[NSLayoutConstraint
+                               constraintsWithVisualFormat:constraint
+                               options:NSLayoutFormatDirectionLeadingToTrailing
+                               metrics:nil
+                               views:NSDictionaryOfVariableBindings(self.webView)]];
 }
 
 
