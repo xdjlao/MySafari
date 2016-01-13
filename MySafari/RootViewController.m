@@ -12,29 +12,23 @@
 @property (weak, nonatomic) IBOutlet UIWebView *webView;
 @property (weak, nonatomic) IBOutlet UITextField *urlTextField;
 @property (weak, nonatomic) IBOutlet UIActivityIndicatorView *activityIndicator;
+@property (weak, nonatomic) IBOutlet UILabel *websiteTitle;
 @property int pageCount;
 @property int backCount;
 @property NSString *urlFix;
-@property (weak, nonatomic) IBOutlet NSLayoutConstraint *topConstraint;
-
+@property (weak, nonatomic) IBOutlet NSLayoutConstraint *topLayoutConstraint;
+@property CGRect rect;
 @end
 
 @implementation RootViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    
     self.pageCount = 0;
     self.backCount = 0;
     self.webView.scrollView.delegate = self;
 }
-
-/*[self.view addConstraints:[NSLayoutConstraint
- constraintsWithVisualFormat:@"V:|-[myView(>=748)]-|"
- options:NSLayoutFormatDirectionLeadingToTrailing
- metrics:nil
- views:NSDictionaryOfVariableBindings(myView)]];
- */
-
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
@@ -47,23 +41,35 @@
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView {
     [self.activityIndicator stopAnimating];
+    self.urlTextField.text = self.webView.request.URL.absoluteString;
+    self.websiteTitle.text = [self.webView stringByEvaluatingJavaScriptFromString:@"document.title"];
     self.pageCount++;
     
 }
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Page not found!" message:nil preferredStyle:UIAlertControllerStyleAlert];
     
+    UIAlertAction *goBack = [UIAlertAction actionWithTitle:@"Go back" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self.webView goBack];
+    }];
+    
+    [alertController addAction:goBack];
+    [self.activityIndicator stopAnimating];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     if([textField.text rangeOfString:@"http://"].location == NSNotFound) {
-        self.urlFix = [@"http://" stringByAppendingString:textField.text];
-    } else if ([textField.text rangeOfString:@"https://"].location == NSNotFound) {
-        self.urlFix = [@"http://" stringByAppendingString:textField.text];
+        if([textField.text rangeOfString:@"https://"].location == NSNotFound) {
+            self.urlFix = [NSString stringWithFormat:@"http://%@", textField.text];
+        } else {
+            self.urlFix = textField.text;
+        }
     } else {
         self.urlFix = textField.text;
     }
-    NSLog(@"%@", self.urlFix);
     NSURL *url = [NSURL URLWithString:self.urlFix];
     [self.webView loadRequest:[NSURLRequest requestWithURL:url]];
     return YES;
@@ -108,30 +114,28 @@
 
 
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    NSLog(@"%f", scrollView.contentOffset.y);
-    CGRect rect = [self.view viewWithTag:10].frame;
-    [self.view viewWithTag:10].frame = CGRectMake(0, scrollView.contentOffset.y * -1, rect.size.width, rect.size.height);
+    
+    self.rect = [self.view viewWithTag:10].frame;
+    float frameHeight = self.rect.size.height;
+    float frameHeightMargin = self.rect.size.height - 20;
+    
+    [self.view viewWithTag:10].frame = CGRectMake(0, scrollView.contentOffset.y * -1, self.rect.size.width, frameHeight);
     [UIView beginAnimations:nil context:NULL];
     [UIView setAnimationDuration:0.5f];
     
-    [self.view viewWithTag:10].alpha = (68.0 - scrollView.contentOffset.y)/68.0;
+    if(scrollView.contentOffset.y <= frameHeight) {
+        [self.view viewWithTag:10].alpha = (frameHeight - scrollView.contentOffset.y)/frameHeight;
+    
+        self.topLayoutConstraint.constant = frameHeightMargin - scrollView.contentOffset.y;
+    }
     
     [UIView commitAnimations];
     
-
-    
-    /*if (scrollView.contentOffset.y < -68) {
-        self.topConstraint.constant = 68.0 - scrollView.contentOffset.y;
-
-    }*/
-    NSString *constraint = [NSString stringWithFormat:@"V:|-spacing[self.webView(==%f)]|", 68.0 - scrollView.contentOffset.y];
-    [self.view addConstraints:[NSLayoutConstraint
-                               constraintsWithVisualFormat:constraint
-                               options:NSLayoutFormatDirectionLeadingToTrailing
-                               metrics:nil
-                               views:NSDictionaryOfVariableBindings(self.webView)]];
 }
 
+- (IBAction)onBackgroundTapped:(UITapGestureRecognizer *)sender {
+    [self.urlTextField resignFirstResponder];
+}
 
 
 /*
